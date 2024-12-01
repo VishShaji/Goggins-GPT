@@ -27,23 +27,17 @@ const TutorApp = () => {
     setInput('')
 
     try {
-      const API_URL = 'https://aam7b42cp4.execute-api.ap-south-1.amazonaws.com/';
-      const response = await fetch(`${API_URL}ask`, {
+      const API_URL = 'https://aam7b42cp4.execute-api.ap-south-1.amazonaws.com/prod';
+      const response = await fetch(`${API_URL}/ask`, {
         method: "POST",
         headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Origin": window.location.origin
+          "Content-Type": "application/json"
         },
-        mode: "cors",
-        credentials: "omit",
         body: JSON.stringify({ question: input, context: messages.map(m => m.content).join('\n') }),
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: 'Network response was not ok' }))
-        console.error('API Error:', errorData)
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json()
@@ -54,7 +48,7 @@ const TutorApp = () => {
       setMessages(prev => [...prev, assistantMessage])
     } catch (err) {
       console.error('Fetch error:', err)
-      setError(err.message || 'Failed to fetch response')
+      setError('Failed to fetch response. Please try again.')
       // Remove the user's message if we got an error
       setMessages(prev => prev.slice(0, -1))
     } finally {
