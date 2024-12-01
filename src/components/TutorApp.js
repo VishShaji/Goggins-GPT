@@ -29,39 +29,50 @@ const TutorApp = () => {
     try {
       const API_URL = 'https://aam7b42cp4.execute-api.ap-south-1.amazonaws.com/prod';
       console.log('Sending request to:', `${API_URL}/ask`);
-      console.log('Request payload:', { question: input, context: messages.map(m => m.content).join('\n') });
       
+      // First, send a preflight OPTIONS request
+      const preflightResponse = await fetch(`${API_URL}/ask`, {
+        method: 'OPTIONS',
+        headers: {
+          'Access-Control-Request-Method': 'POST',
+          'Access-Control-Request-Headers': 'content-type',
+          'Origin': 'https://main.d1io427e742x82.amplifyapp.com'
+        }
+      });
+
+      console.log('Preflight response:', preflightResponse);
+
+      // Then send the actual request
       const response = await fetch(`${API_URL}/ask`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ question: input, context: messages.map(m => m.content).join('\n') }),
+        body: JSON.stringify({ 
+          question: input, 
+          context: messages.map(m => m.content).join('\n') 
+        })
       });
 
       console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
+      
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Error response body:', errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        throw new Error(`Request failed: ${response.status}`);
       }
 
       const data = await response.json();
       console.log('API Response data:', data);
 
       if (!data.body) {
-        console.error('Unexpected response format:', data);
         throw new Error('Invalid response format from server');
       }
 
-      // Parse the body string into JSON
       const bodyData = JSON.parse(data.body);
       console.log('Parsed body data:', bodyData);
 
       if (!bodyData.response) {
-        console.error('Missing response in body:', bodyData);
         throw new Error('Invalid response format from server');
       }
 
@@ -73,8 +84,7 @@ const TutorApp = () => {
         stack: err.stack,
         name: err.name
       });
-      setError(`Error: ${err.message}`);
-      // Remove the user's message if we got an error
+      setError(`Error: ${err.message}. Please try again.`);
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
