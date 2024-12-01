@@ -35,28 +35,33 @@ const TutorApp = () => {
         headers: { 
           "Content-Type": "application/json"
         },
-        mode: "no-cors", // This will prevent CORS errors but make response opaque
         body: JSON.stringify({ 
           question: input, 
           context: messages.map(m => m.content).join('\n') 
         })
       });
 
-      // Since we're using no-cors, we won't be able to read the response directly
-      // Instead, we'll assume success if we get here (no error thrown)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data);
+
+      if (!data.body) {
+        throw new Error('Invalid response format from server');
+      }
+
+      const bodyData = JSON.parse(data.body);
       const assistantMessage = { 
         id: Date.now(), 
         role: 'assistant', 
-        content: "I've received your message, but due to technical limitations, I can't show the response right now. The team is working on fixing this. Stay hard!" 
+        content: bodyData.response 
       };
       setMessages(prev => [...prev, assistantMessage]);
     } catch (err) {
-      console.error('Detailed error:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name
-      });
-      setError(`Connection error. Please try again later.`);
+      console.error('Error:', err);
+      setError(`Failed to get response. Please try again.`);
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
