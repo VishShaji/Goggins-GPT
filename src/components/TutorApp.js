@@ -27,7 +27,7 @@ const TutorApp = () => {
     setInput('')
 
     try {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8003';
+      const API_URL = 'https://aam7b42cp4.execute-api.ap-south-1.amazonaws.com';
       const response = await fetch(`${API_URL}/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -36,14 +36,15 @@ const TutorApp = () => {
 
       if (!response.ok) {
         const errorData = await response.json()
-        if (response.status === 429) {
-          throw new Error('Rate limit exceeded. Please try again in about an hour.')
-        }
-        throw new Error(errorData.message || 'Failed to get response')
+        console.error('API Error:', errorData)
+        throw new Error(errorData.detail || 'Failed to get response')
       }
 
       const data = await response.json()
-      const assistantMessage = { id: Date.now(), role: 'assistant', content: data.response }
+      console.log('API Response:', data)
+      // Parse the body string into JSON
+      const bodyData = JSON.parse(data.body)
+      const assistantMessage = { id: Date.now(), role: 'assistant', content: bodyData.response }
       setMessages(prev => [...prev, assistantMessage])
     } catch (err) {
       setError(err.message)
