@@ -28,31 +28,56 @@ const TutorApp = () => {
 
     try {
       const API_URL = 'https://aam7b42cp4.execute-api.ap-south-1.amazonaws.com/prod';
+      console.log('Sending request to:', `${API_URL}/ask`);
+      console.log('Request payload:', { question: input, context: messages.map(m => m.content).join('\n') });
+      
       const response = await fetch(`${API_URL}/ask`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ question: input, context: messages.map(m => m.content).join('\n') }),
-      })
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
-      const data = await response.json()
-      console.log('API Response:', data)
+      const data = await response.json();
+      console.log('API Response data:', data);
+
+      if (!data.body) {
+        console.error('Unexpected response format:', data);
+        throw new Error('Invalid response format from server');
+      }
+
       // Parse the body string into JSON
-      const bodyData = JSON.parse(data.body)
-      const assistantMessage = { id: Date.now(), role: 'assistant', content: bodyData.response }
-      setMessages(prev => [...prev, assistantMessage])
+      const bodyData = JSON.parse(data.body);
+      console.log('Parsed body data:', bodyData);
+
+      if (!bodyData.response) {
+        console.error('Missing response in body:', bodyData);
+        throw new Error('Invalid response format from server');
+      }
+
+      const assistantMessage = { id: Date.now(), role: 'assistant', content: bodyData.response };
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (err) {
-      console.error('Fetch error:', err)
-      setError('Failed to fetch response. Please try again.')
+      console.error('Detailed error:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      setError(`Error: ${err.message}`);
       // Remove the user's message if we got an error
-      setMessages(prev => prev.slice(0, -1))
+      setMessages(prev => prev.slice(0, -1));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
