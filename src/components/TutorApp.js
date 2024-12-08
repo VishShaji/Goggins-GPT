@@ -8,6 +8,7 @@ const TutorApp = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const scrollAreaRef = useRef(null)
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -27,7 +28,6 @@ const TutorApp = () => {
     setInput('')
 
     try {
-      const API_URL = 'https://aam7b42cp4.execute-api.ap-south-1.amazonaws.com/prod';
       console.log('Sending request to:', `${API_URL}/ask`);
       
       const response = await fetch(`${API_URL}/ask`, {
