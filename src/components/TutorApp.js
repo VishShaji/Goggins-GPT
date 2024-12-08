@@ -47,10 +47,13 @@ const TutorApp = () => {
 
       const data = await response.json();
       console.log('API Response:', data);
+      
+      const bodyData = JSON.parse(data.body);
 
-      if (!data.body) {
-        throw new Error('Invalid response format from server');
-      }
+
+      if (!bodyData.response || !bodyData.status) {
+throw new Error('Invalid response format from server');
+}
 
       const bodyData = JSON.parse(data.body);
       const assistantMessage = { 
