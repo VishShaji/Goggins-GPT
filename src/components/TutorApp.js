@@ -55,7 +55,6 @@ const TutorApp = () => {
 throw new Error('Invalid response format from server');
 }
 
-      const bodyData = JSON.parse(data.body);
       const assistantMessage = { 
         id: Date.now(), 
         role: 'assistant', 
