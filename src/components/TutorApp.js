@@ -22,7 +22,7 @@ const TutorApp = () => {
 
   setLoading(true);
   setError(null);
-  
+
   const userMessage = { id: Date.now(), role: 'user', content: input };
   setMessages(prev => [...prev, userMessage]);
   setInput('');
@@ -32,13 +32,8 @@ const TutorApp = () => {
 
     const response = await fetch(`${API_URL}/ask`, {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ 
-        question: input, 
-        context: messages.map(m => m.content).join('\n')
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: input, context: messages.map(m => m.content).join('\n') })
     });
 
     if (!response.ok) {
@@ -46,12 +41,13 @@ const TutorApp = () => {
     }
 
     const data = await response.json();
-    console.log('API Response:', data);
+    console.log('API Response:', data); // Log the response to inspect
 
-    // Ensure that the response body is a JSON string and parse it
+    // Now we parse the body field, which is a stringified JSON object
     let bodyData;
     try {
-      bodyData = JSON.parse(data.body); // Safely parse the response body
+      bodyData = JSON.parse(data.body); // Parse the body field (stringified JSON)
+      console.log('Parsed Body:', bodyData);
     } catch (error) {
       throw new Error('Failed to parse the response body');
     }
@@ -60,12 +56,9 @@ const TutorApp = () => {
       throw new Error('Invalid response format from server');
     }
 
-    const assistantMessage = { 
-      id: Date.now(), 
-      role: 'assistant', 
-      content: bodyData.response 
-    };
+    const assistantMessage = { id: Date.now(), role: 'assistant', content: bodyData.response };
     setMessages(prev => [...prev, assistantMessage]);
+
   } catch (err) {
     console.error('Error:', err);
     setError(`Failed to get response. Please try again.`);
@@ -74,6 +67,7 @@ const TutorApp = () => {
     setLoading(false);
   }
 };
+
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-purple-900 to-indigo-800 p-4 font-sans">
