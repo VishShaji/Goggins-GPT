@@ -41,27 +41,44 @@ const TutorApp = () => {
     }
 
     const data = await response.json();
-    console.log('API Response:', data); // Log the response to inspect
+    console.log('Full API Response:', data); // Log entire response for debugging
 
-    // Now we parse the body field, which is a stringified JSON object
+    // Enhanced error checking and parsing
     let bodyData;
     try {
-      bodyData = JSON.parse(data.body); // Parse the body field (stringified JSON)
+      // Check if body is already an object or needs parsing
+      if (typeof data.body === 'string') {
+        bodyData = JSON.parse(data.body);
+      } else if (typeof data.body === 'object') {
+        bodyData = data.body;
+      } else {
+        throw new Error('Unexpected body type');
+      }
+
       console.log('Parsed Body:', bodyData);
-    } catch (error) {
-      throw new Error('Failed to parse the response body');
-    }
 
-    if (!bodyData.response) {
-      throw new Error('Invalid response format from server');
-    }
+      // Additional validation
+      if (!bodyData.response) {
+        throw new Error('No response field in parsed body');
+      }
 
-    const assistantMessage = { id: Date.now(), role: 'assistant', content: bodyData.response };
-    setMessages(prev => [...prev, assistantMessage]);
+      const assistantMessage = { 
+        id: Date.now(), 
+        role: 'assistant', 
+        content: bodyData.response 
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+
+    } catch (parseError) {
+      console.error('Parsing Error:', parseError);
+      console.error('Raw data.body:', data.body);
+      setError(`Error processing server response: ${parseError.message}`);
+      setMessages(prev => prev.slice(0, -1)); // Remove the user's last message
+    }
 
   } catch (err) {
-    console.error('Error:', err);
-    setError(`Failed to get response. Please try again.`);
+    console.error('Request Error:', err);
+    setError(`Failed to get response. Please try again. ${err.message}`);
     setMessages(prev => prev.slice(0, -1)); // Remove the user's last message in case of error
   } finally {
     setLoading(false);
