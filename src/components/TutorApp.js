@@ -46,20 +46,15 @@ const TutorApp = () => {
     }
 
     const data = await response.json();
+    console.log('API Response:', data);
 
-    // Check if the 'body' exists and is a valid string before parsing
-    if (!data.body) {
-      throw new Error('No body field in response');
-    }
-
+    // Ensure that the response body is a JSON string and parse it
     let bodyData;
     try {
-      bodyData = JSON.parse(data.body); // Safely parse the body
+      bodyData = JSON.parse(data.body); // Safely parse the response body
     } catch (error) {
       throw new Error('Failed to parse the response body');
     }
-
-    console.log('API Response:', bodyData);
 
     if (!bodyData.response) {
       throw new Error('Invalid response format from server');
