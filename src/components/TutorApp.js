@@ -33,7 +33,10 @@ const TutorApp = () => {
     const response = await fetch(`${API_URL}/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: input, context: messages.map(m => m.content).join('\n') })
+      body: JSON.stringify({ 
+        question: input, 
+        context: messages.map(m => m.content).join('\n') 
+      })
     });
 
     if (!response.ok) {
@@ -41,43 +44,27 @@ const TutorApp = () => {
     }
 
     const data = await response.json();
-    console.log('Full API Response:', data); // Log entire response for debugging
+    console.log('Full API Response:', JSON.stringify(data, null, 2));
 
-    // Enhanced error checking and parsing
-    let bodyData;
-    try {
-      // Check if body is already an object or needs parsing
-      if (typeof data.body === 'string') {
-        bodyData = JSON.parse(data.body);
-      } else if (typeof data.body === 'object') {
-        bodyData = data.body;
-      } else {
-        throw new Error('Unexpected body type');
-      }
-
-      console.log('Parsed Body:', bodyData);
-
-      // Additional validation
-      if (!bodyData.response) {
-        throw new Error('No response field in parsed body');
-      }
-
-      const assistantMessage = { 
-        id: Date.now(), 
-        role: 'assistant', 
-        content: bodyData.response 
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-
-    } catch (parseError) {
-      console.error('Parsing Error:', parseError);
-      console.error('Raw data.body:', data.body);
-      setError(`Error processing server response: ${parseError.message}`);
-      setMessages(prev => prev.slice(0, -1)); // Remove the user's last message
+    // Specifically check for the response field as per backend structure
+    if (!data.response) {
+      throw new Error('No response field in server response');
     }
 
+    const assistantMessage = { 
+      id: Date.now(), 
+      role: 'assistant', 
+      content: data.response 
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+
   } catch (err) {
-    console.error('Request Error:', err);
+    console.error('Complete Error Details:', {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
+
     setError(`Failed to get response. Please try again. ${err.message}`);
     setMessages(prev => prev.slice(0, -1)); // Remove the user's last message in case of error
   } finally {
