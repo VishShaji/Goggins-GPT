@@ -16,59 +16,69 @@ const TutorApp = () => {
     }
   }, [messages])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!input.trim() || loading) return
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!input.trim() || loading) return;
 
-    setLoading(true)
-    setError(null)
-    
-    const userMessage = { id: Date.now(), role: 'user', content: input }
-    setMessages(prev => [...prev, userMessage])
-    setInput('')
+  setLoading(true);
+  setError(null);
+  
+  const userMessage = { id: Date.now(), role: 'user', content: input };
+  setMessages(prev => [...prev, userMessage]);
+  setInput('');
 
-    try {
-      console.log('Sending request to:', `${API_URL}/ask`);
-      
-      const response = await fetch(`${API_URL}/ask`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ 
-          question: input, 
-          context: messages.map(m => m.content).join('\n') 
-        })
-      });
+  try {
+    console.log('Sending request to:', `${API_URL}/ask`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+    const response = await fetch(`${API_URL}/ask`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ 
+        question: input, 
+        context: messages.map(m => m.content).join('\n')
+      })
+    });
 
-      const data = await response.json();
-      console.log('API Response:', data);
-      
-      const bodyData = JSON.parse(data.body);
-
-
-      if (!bodyData.response || !bodyData.status) {
-throw new Error('Invalid response format from server');
-}
-
-      const assistantMessage = { 
-        id: Date.now(), 
-        role: 'assistant', 
-        content: bodyData.response 
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (err) {
-      console.error('Error:', err);
-      setError(`Failed to get response. Please try again.`);
-      setMessages(prev => prev.slice(0, -1));
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
+
+    // Check if the 'body' exists and is a valid string before parsing
+    if (!data.body) {
+      throw new Error('No body field in response');
+    }
+
+    let bodyData;
+    try {
+      bodyData = JSON.parse(data.body); // Safely parse the body
+    } catch (error) {
+      throw new Error('Failed to parse the response body');
+    }
+
+    console.log('API Response:', bodyData);
+
+    if (!bodyData.response) {
+      throw new Error('Invalid response format from server');
+    }
+
+    const assistantMessage = { 
+      id: Date.now(), 
+      role: 'assistant', 
+      content: bodyData.response 
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+  } catch (err) {
+    console.error('Error:', err);
+    setError(`Failed to get response. Please try again.`);
+    setMessages(prev => prev.slice(0, -1)); // Remove the user's last message in case of error
+  } finally {
+    setLoading(false);
   }
+};
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-purple-900 to-indigo-800 p-4 font-sans">
